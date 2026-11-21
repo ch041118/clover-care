@@ -31,12 +31,12 @@ async function remote(path, data, server = config.server) {
   if (!native) {
     const response = await fetch(`${server}/api/${path}`, data ? { method: 'POST', headers: apiHeaders({'Content-Type':'application/json'}), credentials:'include', body: JSON.stringify(data), signal: AbortSignal.timeout(path.startsWith('agent/')?240000:130000) } : { headers:apiHeaders(), credentials:'include', signal: AbortSignal.timeout(15000) });
     const body = await readApiResponse(response);
-    if (!response.ok) throw Object.assign(Error(body.error || '서버에 연결하지 못했어요.'),{status:response.status});
+    if (!response.ok) throw Object.assign(Error(body.error || '서버에 연결하지 못했어요.'),{status:response.status,earlyCompletionConfirmation:body.earlyCompletionConfirmation});
     return body;
   }
   const response = await CapacitorHttp.request({ url: `${server}/api/${path}`, method: data ? 'POST' : 'GET', headers: apiHeaders({'Content-Type':'application/json','X-Clover-Client':'native',...(authToken&&authTokenOrigin===server?{Authorization:'Bearer '+authToken}:{})}), data, responseType: 'text', connectTimeout: 15000, readTimeout: path.startsWith('agent/')?240000:130000 });
   response.data=parseApiBody(typeof response.data==='string'?response.data:JSON.stringify(response.data),response.status,response.headers?.['content-type']||'');
-  if (response.status < 200 || response.status >= 300) throw Object.assign(Error(response.data?.error || '서버에 연결하지 못했어요.'),{status:response.status});
+  if (response.status < 200 || response.status >= 300) throw Object.assign(Error(response.data?.error || '서버에 연결하지 못했어요.'),{status:response.status,earlyCompletionConfirmation:response.data?.earlyCompletionConfirmation});
   if(response.data.token){authToken=response.data.token;authTokenOrigin=server;delete response.data.token;}
   return response.data;
 }

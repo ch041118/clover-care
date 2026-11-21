@@ -17,7 +17,7 @@ import { randomUUID } from 'node:crypto';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { seed } from './lib/seed.mjs';
-import { SERVICES, match, event, transition } from './lib/scheduler.mjs';
+import { SERVICES, match, event, transition, EarlyCompletionConfirmation } from './lib/scheduler.mjs';
 import { decodeNativeAudio } from './lib/voice-input.mjs';
 import { ensureWellness, wellnessCommand, publicWellnessState, replyCheckin, classifyWellnessReply, markElderActivity, markElderRequest } from './lib/wellness.mjs';
 import { createWellnessWorker } from './lib/wellness-worker.mjs';
@@ -173,7 +173,10 @@ const server = http.createServer(async (req,res) => {
       return reply(200,result);
     }
     return reply(404,{error:'찾을 수 없습니다.'});
-  } catch(error) {const status=error.status||400; reply(status,{error:error.message || '요청을 처리하지 못했습니다.'});}
+  } catch(error) {
+    if(error instanceof EarlyCompletionConfirmation)return reply(error.status,{error:error.message,earlyCompletionConfirmation:error.earlyCompletionConfirmation});
+    const status=error.status||400; reply(status,{error:error.message || '요청을 처리하지 못했습니다.'});
+  }
 });
 const runWellness=createWellnessWorker({getDb:()=>db,save,send:sendPushJob});
 server.headersTimeout=15000;
