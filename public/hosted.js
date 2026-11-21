@@ -4,7 +4,7 @@ import { nativeCall as call } from './native-bridge.js';
 import { authenticate } from './auth-ui.js';
 import { createHoldRecorder } from './hold-recorder.js';
 let unbindMic,controller,identity,restarting=false;
-async function api(path,body){const r=await call('api',{path:'/api/'+path,method:body?'POST':'GET',body});if(r.status<200||r.status>=300){if(r.status===401&&!path.startsWith('auth/'))restart();throw Object.assign(Error(r.data.error||'요청을 처리하지 못했습니다.'),{status:r.status});}return r.data;}
+async function api(path,body){const r=await call('api',{path:'/api/'+path,method:body?'POST':'GET',body});if(r.status<200||r.status>=300){if(r.status===401&&!path.startsWith('auth/'))restart();throw Object.assign(Error(r.data.error||'요청을 처리하지 못했습니다.'),{status:r.status,earlyCompletionConfirmation:r.data.earlyCompletionConfirmation});}return r.data;}
 function restart(){if(restarting)return;restarting=true;void controller?.release(true);location.reload();}
 function bindRecorder({button,guide,message,ready,getElderId,getCheckinId,submitted,failure}){
  let elderId,checkinId,toggle=false;
